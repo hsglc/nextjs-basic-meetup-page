@@ -1,4 +1,5 @@
 import MeetupList from "../components/meetups/MeetupList";
+import { MongoClient } from "mongodb";
 
 const DUMMY_MEETUPS = [
   {
@@ -37,9 +38,27 @@ const HomePage = (props) => {
 // }
 
 export const getStaticProps = async () => {
+  MongoClient.connect();
+
+  const client = await MongoClient.connect(
+    "mongodb+srv://admin:admin@cluster0.vygtp.mongodb.net/meetups?retryWrites=true&w=majority"
+  );
+
+  const db = client.db();
+
+  const meetupsCollection = db.collection("meetups");
+
+  const meetups = await meetupsCollection.find().toArray();
+  client.close();
+
   return {
     props: {
-      meetups: DUMMY_MEETUPS,
+      meetups: meetups.map((meetup) => ({
+        title: meetup.title,
+        address: meetup.address,
+        image: meetup.image,
+        id: meetup._id.toString(),
+      })),
     },
     revalidate: 1,
   };
